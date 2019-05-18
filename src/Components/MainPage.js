@@ -1,26 +1,35 @@
 import React from 'react'
-import { Button, Form, Grid, Image, Message, Segment, Input, Icon, Label } from 'semantic-ui-react'
+import { Button, Form, Grid, Image, Message, Segment, Input, Icon, Label, Modal, Header } from 'semantic-ui-react'
 import './MainPage.css'
 import {Redirect} from 'react-router-dom'
 import logo from '../img/logo.png'
+import predeli from '../data/predeli.json'
 class MainPage extends React.Component{
     constructor(props){
         super(props)
         this.state = {
           b: '',
-          kgz: '',
+          fmin: '',
           inom: '',
           ikz: '',
+          fmax: '',
           rom: '',
           loading: false,
           emptyErr: false,
           navigate: false,
           path: '',
-          update: false
+          update: false,
+          textErr: '',
+          modalOpen: false,
+          loadingLast: false,
+          models: [],
+          currentModel: ''
         }
         this.onChange = this.onChange.bind(this)
         this.submit = this.submit.bind(this)
+        this.submitLast = this.submitLast.bind(this)
     } 
+    handleOpen = () => this.setState({ modalOpen: true })
     componentDidMount(){
       var fieldMap = [];
       var mapFinish = 0;
@@ -195,15 +204,54 @@ class MainPage extends React.Component{
       })
     }
     submit(){
-      if(this.state.b !== '' && this.state.kgz !== '' && this.state.inom !== '' && this.state.ikz !== '' && this.state.rom !== ''){
-        this.setState({loading: true, emptyErr: false})
-        setTimeout(() => {
-          this.setState({navigate: true})
-        }, 1000)
+      if(this.state.b !== '' && this.state.fmin !== '' && this.state.inom !== '' && this.state.ikz !== '' && this.state.rom !== '' && this.state.fmax !== ''){
+        var { ikz, inom } = this.state;
+        var check = false;
+        for(var i = 0; i < predeli.length; i++){
+          if(ikz <= predeli[i].ikz && inom === predeli[i].inom){
+            check = true;
+          }
+          if(i === predeli.length-1){
+            if(check){
+              this.setState({loading: true, emptyErr: false, modalOpen: true})
+              fetch('http://localhost:1337/reactor?r='+this.state.rom+"&inom="+this.state.inom+"&fmin="+this.state.fmin+"&fmax="+this.state.fmax)
+              .then(response => response.json())
+              .then(data => {
+                if(data.length === 0){
+                  alert('Не найдено ничего')
+                }else if(data.length === 1){
+                  this.setState({navigate: true})
+                }else{
+                  this.setState({models: data, modalOpen: true})
+                }
+              })
+            }else{
+              this.setState({emptyErr: true, textErr: 'Данные неверны.'})
+            }
+          }
+        }
       }else{
-        this.setState({emptyErr: true})
+        this.setState({emptyErr: true, textErr: 'Введены не все поля.'})
         // alert
       }
+    }
+    chooseModel = (e) => {
+      var model = e.currentTarget.name;
+      console.log(model)
+      this.setState({
+        currentModel: model
+      })
+    }
+    submitLast(){
+      this.setState({loadingLast: true})
+      fetch('http://localhost:1337/get_gab?id='+this.state.currentModel+"&inom="+this.state.inom+"&unom="+this.state.b)
+      .then(response => response.json())
+      .then(data => {
+        this.setState({path: data.name})
+        setTimeout(() => {
+          this.setState({navigate: true})
+        }, 500)
+      })
     }
     render(){
         const { navigate, update } = this.state
@@ -212,7 +260,7 @@ class MainPage extends React.Component{
         if (navigate) {
           return <Redirect to={{
                       pathname: '/result',
-                      state: {path: this.state.path}
+                      state: {id: this.state.path}
                   }} 
                             push={true} />
         }else if(update){
@@ -254,9 +302,18 @@ class MainPage extends React.Component{
                         <Input
                           onChange={this.onChange}
                           type="number" 
-                          name="kgz"
+                          name="fmin"
                           fluid 
-                          placeholder='Рабочие полосы ВЧ-канала'
+                          placeholder='Нижняя граница ВЧ-канала'
+                          label={{ basic: true, content: 'кГц' }}
+                          labelPosition='right' 
+                        /> <br />
+                        <Input
+                          onChange={this.onChange}
+                          type="number" 
+                          name="fmax"
+                          fluid 
+                          placeholder='Верхняя граница ВЧ-канала'
                           label={{ basic: true, content: 'кГц' }}
                           labelPosition='right' 
                         /> <br />
@@ -295,7 +352,7 @@ class MainPage extends React.Component{
                           Обновить базы
                         </Button>
                         {
-                          this.state.emptyErr && <Message color='red'>Введены не все поля.</Message>
+                          this.state.emptyErr && <Message color='red'>{this.state.textErr}</Message>
                         }
                       </Segment>
                     </Form>
@@ -312,6 +369,29 @@ class MainPage extends React.Component{
                     </Message>
                   </Grid.Column>
                 </Grid>
+                <Modal style={{height: "700px"}} size="tiny" open={this.state.modalOpen}>
+                          <Modal.Header>Найдено несколько моделей</Modal.Header>
+                          <Modal.Content>
+                          <Button.Group vertical style={{width: "100%"}}>
+                            {
+                              this.state.models && this.state.models.map((model, i) =>
+                                <Button 
+                                  key={i}
+                                  fluid 
+                                  style={{width: "100%"}}
+                                  name={model._id}
+                                  onClick={this.chooseModel}
+                                >ЗАО "НПП ЭИС" {this.state.inom + " A/" + model.l + " мГн/"+model.min+"-"+model.Max} кГц.</Button>
+                              )
+                            }
+                          </Button.Group>
+                          </Modal.Content>
+                          <Modal.Actions>
+                             <center>
+                             <Button onClick={this.submitLast} loading={this.state.loadingLast} positive icon='checkmark' labelPosition='right' content='Продолжить' />
+                             </center>
+                          </Modal.Actions>
+                        </Modal>
             </div>
         )
     }

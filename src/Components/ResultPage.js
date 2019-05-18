@@ -198,9 +198,9 @@ class ResultPage extends React.Component{
                   <Grid.Column style={{ maxWidth: "80%" }}>
                     <Segment>
                         <Container fluid>
-                            <iframe style={{width: "100%", height: "700px", border: 'none'}} src="http://localhost:1337/pdf/q" />
-                            <Button primary><a style={{color: "white"}} downlod="filename" href="http://localhost:1337/word/q">Скачать Word File</a></Button>
-                            <Button secondary><a style={{color: "white"}} downlod="filename" href="http://localhost:1337/dxf/q">Скачать DXF</a></Button>
+                            <iframe style={{width: "100%", height: "700px", border: 'none'}} src={"http://localhost:1337/pdf/"+this.props.location.state.id} />
+                            <Button primary><a style={{color: "white"}} downlod="filename" href={"http://localhost:1337/word/"+this.props.location.state.id}>Скачать Word File</a></Button>
+                            <Button secondary><a style={{color: "white"}} downlod="filename" href={"http://localhost:1337/dxf/"+this.props.location.state.id}>Скачать DXF</a></Button>
                         </Container>
                     </Segment>
                     <Message>

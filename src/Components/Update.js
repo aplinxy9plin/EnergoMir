@@ -206,6 +206,30 @@ class Update extends React.Component{
         // alert
       }
     }
+    loadFile = (e) => {
+        var files = e.target.files;
+        for (var i = 0, f; f = files[i]; i++) {
+            console.log(files[i])
+            // Only process image files.
+      
+            var reader = new FileReader();
+      
+            // Closure to capture the file information.
+            reader.onload = (function(theFile) {
+              return function(evt) {
+                // Render thumbnail.
+                console.log(evt.target.result)
+                // var span = document.createElement('span');
+                // span.innerHTML = ['<img class="thumb" src="', e.target.result,
+                //                   '" title="', escape(theFile.name), '"/>'].join('');
+                // document.getElementById('list').insertBefore(span, null);
+              };
+            })(f);
+      
+            // Read in the image file as a data URL.
+            reader.readAsDataURL(f);
+          }
+    }
     render(){
         return(
             <div className='login-form'>
@@ -284,7 +308,7 @@ class Update extends React.Component{
                         <Button onClick={this.submit} loading={this.state.loading} style={{background: "#032203", color: 'white'}} fluid size='large'>
                             Добавить новую запись
                         </Button> <br />
-                        <input type="file" style={{display: 'none'}} class="inputfile" id="embedpollfileinput" />
+                        <input onChange={this.loadFile} type="file" style={{display: 'none'}} class="inputfile" id="embedpollfileinput" />
 
                           <label for="embedpollfileinput" class="ui huge right floated button fluid">
                             <i class="ui upload icon"></i> 
