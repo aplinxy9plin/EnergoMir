@@ -199,7 +199,8 @@ class ResultPage extends React.Component{
                     <Segment>
                         <Container fluid>
                             <iframe style={{width: "100%", height: "700px", border: 'none'}} src="http://localhost:1337/pdf/q" />
-                            <Button><a downlod="filename" href="http://localhost:1337/dxf/q">Download DXF</a></Button>
+                            <Button primary><a style={{color: "white"}} downlod="filename" href="http://localhost:1337/word/q">Скачать Word File</a></Button>
+                            <Button secondary><a style={{color: "white"}} downlod="filename" href="http://localhost:1337/dxf/q">Скачать DXF</a></Button>
                         </Container>
                     </Segment>
                     <Message>
