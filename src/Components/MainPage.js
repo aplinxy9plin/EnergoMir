@@ -15,7 +15,8 @@ class MainPage extends React.Component{
           loading: false,
           emptyErr: false,
           navigate: false,
-          path: ''
+          path: '',
+          update: false
         }
         this.onChange = this.onChange.bind(this)
         this.submit = this.submit.bind(this)
@@ -205,15 +206,20 @@ class MainPage extends React.Component{
       }
     }
     render(){
-        const { navigate } = this.state
+        const { navigate, update } = this.state
 
         // here is the important part
         if (navigate) {
           return <Redirect to={{
-                                pathname: '/result',
-                                state: {path: this.state.path}
-                            }} 
+                      pathname: '/result',
+                      state: {path: this.state.path}
+                  }} 
                             push={true} />
+        }else if(update){
+          return <Redirect to={{
+                      pathname: '/update',
+                  }} 
+                  push={true} />
         }
         return(
             <div className='login-form'>
@@ -284,6 +290,9 @@ class MainPage extends React.Component{
 
                         <Button onClick={this.submit} loading={this.state.loading} style={{background: "#032203", color: 'white'}} fluid size='large'>
                           Рассчитать
+                        </Button> <br />
+                        <Button onClick={() => this.setState({update: true})} fluid size='large'>
+                          Обновить базы
                         </Button>
                         {
                           this.state.emptyErr && <Message color='red'>Введены не все поля.</Message>

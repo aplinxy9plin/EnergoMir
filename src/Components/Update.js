@@ -1,13 +1,26 @@
 import React from 'react'
-import { Button, Form, Grid, Image, Message, Segment, Input, Icon, Label, Container } from 'semantic-ui-react'
+import { Button, Form, Grid, Image, Message, Segment, Input, Icon, Label } from 'semantic-ui-react'
 import './MainPage.css'
-import autocad from '../data/autocad.pdf'
-class ResultPage extends React.Component{
+import {Redirect} from 'react-router-dom'
+import logo from '../img/logo.png'
+class Update extends React.Component{
     constructor(props){
         super(props)
         this.state = {
-            download_url: 'https://raw.githubusercontent.com/mjstest/orgb2/b7dcf8d318319fbc00b80d43de42c8c4/demka.dxf'
+          name: '',
+          b: '',
+          kgz: '',
+          inom: '',
+          ikz: '',
+          rom: '',
+          loading: false,
+          emptyErr: false,
+          navigate: false,
+          path: '',
+          update: false
         }
+        this.onChange = this.onChange.bind(this)
+        this.submit = this.submit.bind(this)
     } 
     componentDidMount(){
       var fieldMap = [];
@@ -176,8 +189,24 @@ class ResultPage extends React.Component{
       // document.onclick = function() { rebuild(true); }
       init();
     }
+    onChange(e){
+      const { name, value } = e.currentTarget;
+      this.setState({
+        [name]: parseInt(value, 10)
+      })
+    }
+    submit(){
+      if(this.state.b !== '' && this.state.kgz !== '' && this.state.inom !== '' && this.state.ikz !== '' && this.state.rom !== '' && this.state.name !== ''){
+        this.setState({loading: true, emptyErr: false})
+        // setTimeout(() => {
+        //   this.setState({navigate: true})
+        // }, 1000)
+      }else{
+        this.setState({emptyErr: true})
+        // alert
+      }
+    }
     render(){
-        console.log(this.props.location.state.id)
         return(
             <div className='login-form'>
               <canvas id="frame">Canvas not supported by your browser</canvas>
@@ -195,13 +224,77 @@ class ResultPage extends React.Component{
                 `}
                 </style>
                 <Grid textAlign='center' style={{ height: '100%' }} verticalAlign='middle'>
-                  <Grid.Column style={{ maxWidth: "80%" }}>
-                    <Segment>
-                        <Container fluid>
-                            <iframe style={{width: "100%", height: "700px", border: 'none'}} src="http://localhost:1337/pdf/q" />
-                            <Button><a downlod="filename" href="http://localhost:1337/dxf/q">Download DXF</a></Button>
-                        </Container>
-                    </Segment>
+                  <Grid.Column style={{ maxWidth: 800 }}>
+                    <Form size='large'>
+                      <Segment stacked style={{paddingBottom: "80px"}}>
+                      <Image src={logo} fluid />
+                        <Input
+                          onChange={this.onChange} 
+                          type="text"
+                          name="name"
+                          fluid 
+                          placeholder='Название'
+                        /> <br />
+                        <Input
+                          onChange={this.onChange} 
+                          type="number"
+                          name="b"
+                          fluid 
+                          placeholder='Класс линии электропередач'
+                          label={{ basic: true, content: 'В' }}
+                          labelPosition='right' 
+                        /> <br />
+                        <Input
+                          onChange={this.onChange}
+                          type="number" 
+                          name="kgz"
+                          fluid 
+                          placeholder='Рабочие полосы ВЧ-канала'
+                          label={{ basic: true, content: 'кГц' }}
+                          labelPosition='right' 
+                        /> <br />
+                        <Input
+                          onChange={this.onChange}
+                          type="number" 
+                          name="inom"
+                          fluid 
+                          placeholder='Номинальный ток'
+                          label={{ basic: true, content: 'Iном, А' }}
+                          labelPosition='right' 
+                        /> <br />
+                        <Input
+                          onChange={this.onChange}
+                          type="number" 
+                          name="ikz"
+                          fluid 
+                          placeholder='Ток КЗ'
+                          label={{ basic: true, content: 'Iкз, кА' }}
+                          labelPosition='right' 
+                        /> <br />
+                        <Input
+                          onChange={this.onChange}
+                          type="number" 
+                          name="rom"
+                          fluid 
+                          placeholder='Минимальная величина активной составляющей полного сопротивления'
+                          label={{ basic: true, content: '(R, Ом)' }}
+                          labelPosition='right' 
+                        /> <br />
+
+                        <Button onClick={this.submit} loading={this.state.loading} style={{background: "#032203", color: 'white'}} fluid size='large'>
+                            Добавить новую запись
+                        </Button> <br />
+                        <input type="file" style={{display: 'none'}} class="inputfile" id="embedpollfileinput" />
+
+                          <label for="embedpollfileinput" class="ui huge right floated button fluid">
+                            <i class="ui upload icon"></i> 
+                            Загрузить CSV
+                          </label>
+                        {
+                          this.state.emptyErr && <Message color='red'>Введены не все поля.</Message>
+                        }
+                      </Segment>
+                    </Form>
                     <Message>
                     <Button as='div' labelPosition='right'>
                       <Button color='blue'>
@@ -220,4 +313,4 @@ class ResultPage extends React.Component{
     }
 }
 
-export default ResultPage
+export default Update
