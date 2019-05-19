@@ -205,31 +205,28 @@ class MainPage extends React.Component{
     }
     submit(){
       if(this.state.b !== '' && this.state.fmin !== '' && this.state.inom !== '' && this.state.ikz !== '' && this.state.rom !== '' && this.state.fmax !== ''){
-        var { ikz, inom } = this.state;
-        var check = false;
-        for(var i = 0; i < predeli.length; i++){
-          if(ikz <= predeli[i].ikz && inom === predeli[i].inom){
-            check = true;
-          }
-          if(i === predeli.length-1){
-            if(check){
-              this.setState({loading: true, emptyErr: false, modalOpen: true})
-              fetch('http://localhost:1337/reactor?r='+this.state.rom+"&inom="+this.state.inom+"&fmin="+this.state.fmin+"&fmax="+this.state.fmax)
-              .then(response => response.json())
-              .then(data => {
-                if(data.length === 0){
-                  alert('Не найдено ничего')
-                }else if(data.length === 1){
-                  this.setState({navigate: true})
-                }else{
-                  this.setState({models: data, modalOpen: true})
-                }
-              })
+        var { ikz, b } = this.state;
+        this.setState({loading: true, emptyErr: false})
+          fetch('http://localhost:1337/reactor?r='+this.state.rom+"&inom="+this.state.inom+"&fmin="+this.state.fmin+"&fmax="+this.state.fmax+"&ikz="+ikz+"&unom="+b)
+          .then(response => response.json())
+          .then(data => {
+            if(data.length === 0){
+              alert('Не найдено ничего')
+            }else if(data.length === 1){
+              this.setState({loading: true})
+              console.log(data)
+              fetch('http://localhost:1337/get_gab?id='+data[0]._id+"&inom="+this.state.inom+"&unom="+this.state.b)
+                .then(response => response.json())
+                .then(data => {
+                  this.setState({path: data.name})
+                  setTimeout(() => {
+                    this.setState({navigate: true})
+                  }, 500)
+                })
             }else{
-              this.setState({emptyErr: true, textErr: 'Данные неверны.'})
+              this.setState({models: data, modalOpen: true})
             }
-          }
-        }
+          })
       }else{
         this.setState({emptyErr: true, textErr: 'Введены не все поля.'})
         // alert
@@ -360,7 +357,7 @@ class MainPage extends React.Component{
                     <Button as='div' labelPosition='right'>
                       <Button color='blue'>
                         <Icon name='heart' />
-                        Like
+                        <a style={{color: "white"}} target="_blank" href="https://www.instagram.com/p/BxniruknKM9/?igshid=1xkwh7u4ugxlu">Link</a>
                       </Button>
                       <Label as='a' basic color='green' pointing='left'>
                         2,048

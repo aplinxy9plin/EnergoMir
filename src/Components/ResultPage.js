@@ -207,7 +207,7 @@ class ResultPage extends React.Component{
                     <Button as='div' labelPosition='right'>
                       <Button color='blue'>
                         <Icon name='heart' />
-                        Like
+                        <a style={{color: "white"}} target="_blank" href="https://www.instagram.com/p/BxniruknKM9/?igshid=1xkwh7u4ugxlu">Link</a>
                       </Button>
                       <Label as='a' basic color='green' pointing='left'>
                         2,048

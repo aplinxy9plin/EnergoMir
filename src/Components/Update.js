@@ -2,22 +2,15 @@ import React from 'react'
 import { Button, Form, Grid, Image, Message, Segment, Input, Icon, Label } from 'semantic-ui-react'
 import './MainPage.css'
 import {Redirect} from 'react-router-dom'
+import { csv } from 'd3-request';
 import logo from '../img/logo.png'
+import papaparse from 'papaparse'
+import axios from 'axios'
 class Update extends React.Component{
     constructor(props){
         super(props)
         this.state = {
-          name: '',
-          b: '',
-          kgz: '',
-          inom: '',
-          ikz: '',
-          rom: '',
-          loading: false,
-          emptyErr: false,
-          navigate: false,
-          path: '',
-          update: false
+
         }
         this.onChange = this.onChange.bind(this)
         this.submit = this.submit.bind(this)
@@ -196,15 +189,48 @@ class Update extends React.Component{
       })
     }
     submit(){
-      if(this.state.b !== '' && this.state.kgz !== '' && this.state.inom !== '' && this.state.ikz !== '' && this.state.rom !== '' && this.state.name !== ''){
-        this.setState({loading: true, emptyErr: false})
-        // setTimeout(() => {
-        //   this.setState({navigate: true})
-        // }, 1000)
-      }else{
-        this.setState({emptyErr: true})
-        // alert
-      }
+        fetch('http://localhost:1337/upload_one', {
+        headers: {
+        	'Accept': 'application/json',
+        	'Content-Type': 'application/json'
+        },
+        method: "POST", 
+        body: JSON.stringify({
+            gabariti: {
+               inom: this.state.inom,
+               l: this.state.l,
+               h: this.state.h,
+               diam: this.state.diam,
+               weight: this.state.weight
+            },
+            reactor: {
+                l: this.state.l,
+                r: this.state.r,
+                min: this.state.min,
+                Max: this.state.Max,
+                Dial: this.state.Dial
+            }
+        })})
+        .then(response => response.json())
+        .then(data => {
+            if(data.type === 'ok'){
+                alert('Успешно импортировано!')
+                window.location.reload()
+            }
+        })
+        // fetch('http://localhost:1337/upload_one', {
+        //     method:'post',
+        //     headers : { 
+        //         'Content-Type': 'application/json',
+        //         'Accept': 'application/json'
+        //        },
+        //     dataType: "json",
+            
+        //   })
+        //   .then(response => response.json())
+        //   .then(data => {
+        //       console.log(data)
+        //   });
     }
     loadFile = (e) => {
         var files = e.target.files;
@@ -216,20 +242,132 @@ class Update extends React.Component{
       
             // Closure to capture the file information.
             reader.onload = (function(theFile) {
-              return function(evt) {
-                // Render thumbnail.
-                console.log(evt.target.result)
-                // var span = document.createElement('span');
-                // span.innerHTML = ['<img class="thumb" src="', e.target.result,
-                //                   '" title="', escape(theFile.name), '"/>'].join('');
-                // document.getElementById('list').insertBefore(span, null);
+              return function(event) {
+                  console.log(event.target.result)
+                  var formData = new FormData();
+                  console.log(e.target)
+                  formData.append('file', event.target);
+                  fetch('http://localhost:1337/upload', {
+                    method:'POST',
+                     body: formData
+                  });
               };
             })(f);
       
             // Read in the image file as a data URL.
             reader.readAsDataURL(f);
           }
+        
+        function getAsText(fileToRead) {
+            var reader = new FileReader();
+            // Handle errors load
+            reader.onload = loadHandler;
+            reader.onerror = errorHandler;
+            // Read file into memory as UTF-8      
+            reader.readAsText(fileToRead);
+        }
+        
+        function loadHandler(event) {
+            var csv = event.target.result;
+            processData(csv);             
+        }
+        
+        function processData(csv) {
+            var allTextLines = csv.split(/\r\n|\n/);
+            var lines = [];
+            while (allTextLines.length) {
+                lines.push(allTextLines.shift().split(','));
+            }
+            console.log(lines);
+            drawOutput(lines);
+        }
+        
+        //if your csv file contains the column names as the first line
+        function processDataAsObj(csv){
+            var allTextLines = csv.split(/\r\n|\n/);
+            var lines = [];
+            
+            //first line of csv
+            var keys = allTextLines.shift().split(',');
+            
+            while (allTextLines.length) {
+                var arr = allTextLines.shift().split(',');
+                var obj = {};
+                for(var i = 0; i < keys.length; i++){
+                    obj[keys[i]] = arr[i];
+            }
+                lines.push(obj);
+            }
+                console.log(lines);
+            drawOutputAsObj(lines);
+        }
+        
+        function errorHandler(evt) {
+            if(evt.target.error.name == "NotReadableError") {
+                alert("Canno't read file !");
+            }
+        }
+        
+        function drawOutput(lines){
+            console.log(lines)
+            //Clear previous data
+            // document.getElementById("output").innerHTML = "";
+            // var table = document.createElement("table");
+            // for (var i = 0; i < lines.length; i++) {
+            //     var row = table.insertRow(-1);
+            //     for (var j = 0; j < lines[i].length; j++) {
+            //         var firstNameCell = row.insertCell(-1);
+            //         firstNameCell.appendChild(document.createTextNode(lines[i][j]));
+            //     }
+            // }
+            // // document.getElementById("output").appendChild(table);
+        }
+        
+        //draw the table, if first line contains heading
+        function drawOutputAsObj(lines){
+            console.log(lines)
+            //Clear previous data
+            // document.getElementById("output").innerHTML = "";
+            // var table = document.createElement("table");
+            
+            // //for the table headings
+            // var tableHeader = table.insertRow(-1);
+            //  Object.keys(lines[0]).forEach(function(key){
+            //      var el = document.createElement("TH");
+            //     el.innerHTML = key;		
+            //     tableHeader.appendChild(el);
+            // });	
+            
+            // //the data
+            // for (var i = 0; i < lines.length; i++) {
+            //     var row = table.insertRow(-1);
+            //     Object.keys(lines[0]).forEach(function(key){
+            //         var data = row.insertCell(-1);
+            //         data.appendChild(document.createTextNode(lines[i][key]));
+            //     });
+            // }
+            // document.getElementById("output").appendChild(table);
+        }
+        
+        
     }
+    handleFileUpload(e) {
+        const file = e.currentTarget.files[0]
+        // this.props.actions.uploadRequest({
+        //    file,
+        //    name: 'Awesome Cat Pic'
+        // })
+        let data = new FormData();
+        data.append('file', file);
+        data.append('name', 'file');
+      
+          axios.post('http://localhost:1337/upload_many', data)
+            .then(response => {
+                alert('Успешно импортировано!')
+                window.location.reload()
+            })
+            // .catch(error => dispatch(uploadFail(error)))
+      }
     render(){
         return(
             <div className='login-form'>
@@ -255,26 +393,40 @@ class Update extends React.Component{
                         <Input
                           onChange={this.onChange} 
                           type="text"
-                          name="name"
+                          name="L"
                           fluid 
-                          placeholder='Название'
+                          placeholder='l'
                         /> <br />
                         <Input
                           onChange={this.onChange} 
                           type="number"
-                          name="b"
+                          name="r"
                           fluid 
-                          placeholder='Класс линии электропередач'
-                          label={{ basic: true, content: 'В' }}
+                          placeholder='R'
                           labelPosition='right' 
                         /> <br />
                         <Input
                           onChange={this.onChange}
                           type="number" 
-                          name="kgz"
+                          name="min"
                           fluid 
-                          placeholder='Рабочие полосы ВЧ-канала'
-                          label={{ basic: true, content: 'кГц' }}
+                          placeholder='Fmin'
+                          labelPosition='right' 
+                        /> <br />
+                        <Input
+                          onChange={this.onChange}
+                          type="number" 
+                          name="Max"
+                          fluid 
+                          placeholder='Fmax'
+                          labelPosition='right' 
+                        /> <br />
+                        <Input
+                          onChange={this.onChange}
+                          type="number" 
+                          name="Dial"
+                          fluid 
+                          placeholder='Предел'
                           labelPosition='right' 
                         /> <br />
                         <Input
@@ -282,33 +434,38 @@ class Update extends React.Component{
                           type="number" 
                           name="inom"
                           fluid 
-                          placeholder='Номинальный ток'
-                          label={{ basic: true, content: 'Iном, А' }}
+                          placeholder='Inom'
                           labelPosition='right' 
                         /> <br />
                         <Input
                           onChange={this.onChange}
                           type="number" 
-                          name="ikz"
+                          name="h"
                           fluid 
-                          placeholder='Ток КЗ'
-                          label={{ basic: true, content: 'Iкз, кА' }}
+                          placeholder='H'
                           labelPosition='right' 
                         /> <br />
                         <Input
                           onChange={this.onChange}
                           type="number" 
-                          name="rom"
+                          name="diam"
                           fluid 
-                          placeholder='Минимальная величина активной составляющей полного сопротивления'
-                          label={{ basic: true, content: '(R, Ом)' }}
+                          placeholder='Диаметр'
+                          labelPosition='right' 
+                        /> <br />
+                        <Input
+                          onChange={this.onChange}
+                          type="number" 
+                          name="weight"
+                          fluid 
+                          placeholder='Вес'
                           labelPosition='right' 
                         /> <br />
 
                         <Button onClick={this.submit} loading={this.state.loading} style={{background: "#032203", color: 'white'}} fluid size='large'>
                             Добавить новую запись
                         </Button> <br />
-                        <input onChange={this.loadFile} type="file" style={{display: 'none'}} class="inputfile" id="embedpollfileinput" />
+                        <input onChange={this.handleFileUpload} type="file" style={{display: 'none'}} class="inputfile" id="embedpollfileinput" />
 
                           <label for="embedpollfileinput" class="ui huge right floated button fluid">
                             <i class="ui upload icon"></i> 
@@ -323,7 +480,7 @@ class Update extends React.Component{
                     <Button as='div' labelPosition='right'>
                       <Button color='blue'>
                         <Icon name='heart' />
-                        Like
+                        <a style={{color: "white"}} target="_blank" href="https://www.instagram.com/p/BxniruknKM9/?igshid=1xkwh7u4ugxlu">Link</a>
                       </Button>
                       <Label as='a' basic color='green' pointing='left'>
                         2,048
@@ -338,3 +495,28 @@ class Update extends React.Component{
 }
 
 export default Update
+export function uploadSuccess({ data }) {
+    return {
+      type: 'UPLOAD_DOCUMENT_SUCCESS',
+      data,
+    };
+  }
+  
+  export function uploadFail(error) {
+    return {
+      type: 'UPLOAD_DOCUMENT_FAIL',
+      error,
+    };
+  }
+  
+  export function uploadDocumentRequest({ file, name }) {  
+    let data = new FormData();
+    data.append('file', document);
+    data.append('name', name);
+  
+    return (dispatch) => {
+      axios.post('http://localhost:1337/upload', data)
+        .then(response => dispatch(uploadSuccess(response)))
+        .catch(error => dispatch(uploadFail(error)))
+    }
+  }
